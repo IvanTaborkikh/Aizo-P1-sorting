@@ -1,5 +1,5 @@
-#ifndef SINGLELIST_H
-#define SINGLELIST_H
+#ifndef DOUBLELIST_H
+#define DOUBLELIST_H
 
 #include <iostream>
 #include <random>
@@ -8,12 +8,13 @@
 #include <algorithm>
 
 template <typename T>
-class SingleList {
+class DoubleList {
 private:
     struct Node {
         T value;
         Node* next;
-        Node(T val) : value(val), next(nullptr) {}
+        Node* prev;
+        Node(T val) : value(val), next(nullptr), prev(nullptr) {}
     };
 
     Node* head;
@@ -21,12 +22,12 @@ private:
     int size;
 
 public:
-    SingleList() : head(nullptr), tail(nullptr), size(0) {}
+    DoubleList() : head(nullptr), tail(nullptr), size(0) {}
 
-
-    ~SingleList() {
+    ~DoubleList() {
         clear();
     }
+
 
     void clear() {
         // free all nodes
@@ -38,7 +39,6 @@ public:
         }
         head = nullptr;
         tail = nullptr;
-
         size = 0;
     }
 
@@ -48,10 +48,10 @@ public:
             head = newNode;
             tail = newNode;
         } else {
+            newNode->prev = tail;
             tail->next = newNode;
             tail = newNode;
         }
-
         size++;
     }
 
@@ -63,10 +63,10 @@ public:
         return current->value;
     }
 
+
     int getSize() const {
         return size;
     }
-
 
     void fillRandom(int count) {
         // fill with random values depending on type
@@ -89,7 +89,6 @@ public:
             for (int i = 0; i < count; i++) {
                 pushBack(dist(gen));
             }
-
         } else {
             std::uniform_int_distribution<T> dist(
                 std::numeric_limits<T>::min(),
@@ -98,6 +97,7 @@ public:
             for (int i = 0; i < count; i++) {
                 pushBack(dist(gen));
             }
+
         }
     }
 
@@ -116,7 +116,6 @@ public:
                 for (int j = 0; j < len; j++) s += static_cast<char>(charDist(gen));
                 tmp[i] = s;
             }
-
         } else if constexpr (std::is_floating_point<T>::value) {
             std::uniform_real_distribution<T> dist(-1000000.0, 1000000.0);
             for (int i = 0; i < count; i++) tmp[i] = dist(gen);
@@ -127,9 +126,9 @@ public:
             );
             for (int i = 0; i < count; i++) tmp[i] = dist(gen);
         }
+
         // sort ascending
         std::sort(tmp, tmp + count);
-
         // load back to list
         for (int i = 0; i < count; i++) pushBack(tmp[i]);
         delete[] tmp;
@@ -205,7 +204,7 @@ public:
         delete[] tmp;
     }
 
-
+    
     // copy list to array
     void toArray(T* arr) const {
         Node* current = head;
@@ -222,7 +221,6 @@ public:
         for (int i = 0; i < count; i++) {
             pushBack(arr[i]);
         }
-
     }
 
     // check if list is sorted
@@ -245,6 +243,5 @@ public:
         std::cout << std::endl;
     }
 };
-
 
 #endif

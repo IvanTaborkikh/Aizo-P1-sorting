@@ -9,39 +9,51 @@
 
 inline std::string algorithmToString(Parameters::Algorithms algo) {
     switch (algo) {
-        case Parameters::Algorithms::bubble: return "bubble";
-        case Parameters::Algorithms::cocktail: return "cocktail";
-        case Parameters::Algorithms::merge: return "merge";
+        case Parameters::Algorithms::bubble:    return "bubble";
+        case Parameters::Algorithms::cocktail:  return "cocktail";
+        case Parameters::Algorithms::merge:     return "merge";
         case Parameters::Algorithms::insertion: return "insertion";
-        case Parameters::Algorithms::bucket: return "bucket";
-        case Parameters::Algorithms::quick: return "quick";
-        case Parameters::Algorithms::shell: return "shell";
-        default: return "unknown";
+        case Parameters::Algorithms::bucket:    return "bucket";
+        case Parameters::Algorithms::quick:     return "quick";
+        case Parameters::Algorithms::shell:     return "shell";
+        default:                                return "unknown";
     }
 }
 
+
 inline std::string structureToString(Parameters::Structures s) {
     switch (s) {
-        case Parameters::Structures::array: return "array";
+        case Parameters::Structures::array:      return "array";
         case Parameters::Structures::singleList: return "singleList";
         case Parameters::Structures::doubleList: return "doubleList";
-        case Parameters::Structures::queue: return "queue";
-        case Parameters::Structures::stack: return "stack";
+        case Parameters::Structures::queue:      return "queue";
+        case Parameters::Structures::stack:      return "stack";
         case Parameters::Structures::binaryTree: return "binaryTree";
-        default: return "unknown";
+        default:                                 return "unknown";
     }
 }
 
 inline std::string dataTypeToString(Parameters::DataTypes t) {
     switch (t) {
-        case Parameters::DataTypes::typeInt: return "int";
-        case Parameters::DataTypes::typeFloat: return "float";
-        case Parameters::DataTypes::typeDouble: return "double";
-        case Parameters::DataTypes::typeChar: return "char";
-        case Parameters::DataTypes::typeString: return "string";
+        case Parameters::DataTypes::typeInt:          return "int";
+        case Parameters::DataTypes::typeFloat:        return "float";
+        case Parameters::DataTypes::typeDouble:       return "double";
+        case Parameters::DataTypes::typeChar:         return "char";
+        case Parameters::DataTypes::typeString:       return "string";
         case Parameters::DataTypes::typeUnsignedLong: return "unsignedLong";
         case Parameters::DataTypes::typeUnsignedChar: return "unsignedChar";
-        default: return "unknown";
+        default:                                      return "unknown";
+    }
+}
+
+
+inline std::string distributionToString(Parameters::Distribution d) {
+    switch (d) {
+        case Parameters::Distribution::random:        return "random";
+        case Parameters::Distribution::ascending:     return "ascending";
+        case Parameters::Distribution::ascending50Per:return "ascending50";
+        case Parameters::Distribution::descending:    return "descending";
+        default:                                      return "random";
     }
 }
 
@@ -53,40 +65,45 @@ inline std::string getCurrentDateTime() {
     return std::string(buf);
 }
 
-
-// TODO: add more columns later
-inline void appendCsvRow(const std::string& filename,
-                        const std::string& algorithm,
-                        const std::string& structure,
-                        const std::string& dataType,
-                        int size,
-                        int iterations,
-                        long long minTime,
-                        long long maxTime,
-                        long long avgTime) {
+inline void writeCsvHeaderIfNeeded(const std::string& filename) {
     std::ifstream check(filename);
     bool exists = check.good();
     check.close();
 
+    if (!exists) {
+        std::ofstream file(filename);
+        if (!file.is_open()) {
+            std::cerr << "ERROR! Could not create results file: " << filename << std::endl;
+            return;
+            
+        }
+        file << "date,algorithm,structure,dataType,distribution,size,iteration,time_us\n";
+        file.close();
+    }
+}
+
+inline void appendCsvRow(const std::string& filename,
+                         const std::string& algorithm,
+                         const std::string& structure,
+                         const std::string& dataType,
+                         const std::string& distribution,
+                         int size,
+                         int iteration,
+                         long long timeUs) {
     std::ofstream file(filename, std::ios::app);
     if (!file.is_open()) {
         std::cerr << "ERROR! Could not open results file: " << filename << std::endl;
         return;
     }
 
-    if (!exists) {
-        file << "date,algorithm,structure,dataType,size,iterations,min_us,max_us,avg_us\n";
-    }
-
     file << getCurrentDateTime() << ","
          << algorithm << ","
          << structure << ","
          << dataType << ","
+         << distribution << ","
          << size << ","
-         << iterations << ","
-         << minTime << ","
-         << maxTime << ","
-         << avgTime << "\n";
+         << iteration << ","
+         << timeUs << "\n";
 
     file.close();
 }

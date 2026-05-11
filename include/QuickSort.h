@@ -7,58 +7,88 @@ template <typename T>
 void quickSort(T* arr, int max, int min, int pivotType) {
     if (min >= max) return;
 
-    int pivotIdx = max;
-    if (pivotType == 0) {
-        static std::mt19937 gen(std::random_device{}());
-        std::uniform_int_distribution<int> dist(min, max);
-        pivotIdx = dist(gen);
-    } else if (pivotType == 1) {
-        pivotIdx = min;
-    } else if (pivotType == 3) {
-       
-        pivotIdx = min + (max - min) / 2;
-    }
-    
-    if (pivotIdx != max) {
-        T tmp = arr[pivotIdx];
-        arr[pivotIdx] = arr[max];
-        arr[max] = tmp;
-    }
+    // using stack instead of recursion, was getting segfault on large sorted arrays
+    int stackSize = max - min + 1;
+    int* lo = new int[stackSize];
+    int* hi = new int[stackSize];
+    int top = 0;
+    lo[top] = min;
+    hi[top] = max;
+    top++;
 
-    int i = min;
-    int j = max - 1;
-    T pivot = arr[max];
-    T temp;
+    while (top > 0) {
+        top--;
+        int curMin = lo[top];
+        int curMax = hi[top];
 
-    while (i != j) {
-        if (arr[i] > pivot) {
-            temp = arr[i];
-            while (i != j) {
-                if (arr[j] < pivot) {
-                    arr[i] = arr[j];
-                    arr[j] = temp;
-                    break;
-                }
-                j--;
-            }
-            continue;
+        if (curMin >= curMax) continue;
+
+        // default pivot is rightmost element
+        int pivotIdx = curMax;
+        if (pivotType == 0) {
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<int> dist(curMin, curMax);
+            pivotIdx = dist(gen);
+        } else if (pivotType == 1) {
+            pivotIdx = curMin;
+        } else if (pivotType == 3) {
+            pivotIdx = curMin + (curMax - curMin) / 2;
         }
-        i++;
+
+
+        if (pivotIdx != curMax) {
+            T tmp = arr[pivotIdx];
+            arr[pivotIdx] = arr[curMax];
+            arr[curMax] = tmp;
+        }
+
+        int i = curMin;
+        int j = curMax - 1;
+        T pivot = arr[curMax];
+        T temp;
+
+        while (i != j) {
+            if (arr[i] > pivot) {
+                temp = arr[i];
+                while (i != j) {
+                    if (arr[j] < pivot) {
+                        arr[i] = arr[j];
+                        arr[j] = temp;
+                        break;
+                    }
+                    j--;
+                }
+                continue;
+            }
+            i++;
+        }
+
+        if (arr[i] > pivot) {
+            arr[curMax] = arr[i];
+            arr[i] = pivot;
+        } else {
+            arr[curMax] = arr[i + 1];
+            arr[i + 1] = pivot;
+            i++;
+        }
+
+        // push left and right parts to stack
+        if (curMin < i - 1) {
+            lo[top] = curMin;
+            hi[top] = i - 1;
+            top++;
+        }
+        if (i + 1 < curMax) {
+            lo[top] = i + 1;
+            hi[top] = curMax;
+            top++;
+        }
     }
 
-    if (arr[i] > pivot) {
-        arr[max] = arr[i];
-        arr[i] = pivot;
-    } else {
-        arr[max] = arr[i + 1];
-        arr[i + 1] = pivot;
-        i++;
-    }
-
-    if (min != i)
-        quickSort(arr, i - 1, min, pivotType);
-    if (max - 1 != i)
-        quickSort(arr, max, i + 1, pivotType);
+    
+    delete[] lo;
+    delete[] hi;
 }
 
 #endif

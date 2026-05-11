@@ -8,6 +8,10 @@
 #include "BucketSort.h"
 #include "FileHelper.h"
 #include "CsvWriter.h"
+#include "DoubleList.h"
+#include "BinaryTree.h"
+#include "Stack.h"
+#include <string>
 
 
 template <typename T>
@@ -23,9 +27,14 @@ void sortArray(T* arr, int size) {
         int formula = (shellParameter == ShellParameters::option2) ? 1 : 0;
         shellSort(arr, size, formula);
     } else if (algorithm == Algorithms::bucket) {
-        bucketSort(arr, size);
+        if constexpr (std::is_same<T, std::string>::value) {
+            std::cerr << "BucketSort does not support strings, using ShellSort instead" << std::endl;
+            shellSort(arr, size, 0);
+        } else {
+            bucketSort(arr, size);
+        }
     } else {
-        std::cerr << "ERROR! Algorithm not implemented yet" << std::endl;
+        std::cerr << "ERROR: No algorithm" << std::endl;
     }
 }
 
@@ -36,6 +45,7 @@ bool checkSorted(T* arr, int size) {
     }
     return true;
 }
+
 
 template <typename T>
 void singleFileForType() {
@@ -49,11 +59,9 @@ void singleFileForType() {
     }
 
     std::cout << "Read " << size << " elements from " << inputFile << std::endl;
-
     sortArray(arr, size);
-
     bool sorted = checkSorted(arr, size);
-    std::cout << "Sorted: " << (sorted ? "yes" : "no") << std::endl;
+    std::cout << "Sorted: " << (sorted ? "yes:)" : "no:(") << std::endl;
 
     if (!outputFile.empty()) {
         if (writeArrayToFile<T>(outputFile, arr, size)) {
@@ -72,33 +80,147 @@ void benchmarkForType() {
               << iterations << " iterations, "
               << structureSize << " elements" << std::endl;
 
+    if (!resultsFile.empty()) {
+        writeCsvHeaderIfNeeded(resultsFile);
+    }
+
     long long minTime = -1;
     long long maxTime = 0;
     long long totalTime = 0;
     int successCount = 0;
-
     for (int it = 0; it < iterations; it++) {
-        Array<T> arr(structureSize);
-        arr.fillRandom();
+        long long elapsed = 0;
+        bool sorted = false;
 
-        auto start = std::chrono::high_resolution_clock::now();
-        sortArray(&arr[0], arr.getSize());
-        auto end = std::chrono::high_resolution_clock::now();
+        if (structure == Structures::array || structure == Structures::undefined) {
+            Array<T> arr(structureSize);
+            if (distribution == Distribution::ascending) {
+                arr.fillAscending();
+            } else if (distribution == Distribution::descending) {
+                arr.fillDescending();
+            } else if (distribution == Distribution::ascending50Per) {
+                arr.fillAscending50();
+            } else {
+                arr.fillRandom();
+            }
 
-        long long elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+            auto start = std::chrono::high_resolution_clock::now();
+            sortArray(&arr[0], arr.getSize());
+            auto end = std::chrono::high_resolution_clock::now();
+            elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+            sorted = arr.isSorted();
+        }
+        else if (structure == Structures::singleList) {
+            SingleList<T> list;
+            if (distribution == Distribution::ascending) {
+                list.fillAscending(structureSize);
+            } else if (distribution == Distribution::descending) {
+                list.fillDescending(structureSize);
+            } else if (distribution == Distribution::ascending50Per) {
+                list.fillAscending50(structureSize);
+            } else {
+                list.fillRandom(structureSize);
+            }
 
-        if (arr.isSorted()) {
+            T* tmpArr = new T[structureSize];
+            list.toArray(tmpArr);
+            auto start = std::chrono::high_resolution_clock::now();
+            sortArray(tmpArr, structureSize);
+            auto end = std::chrono::high_resolution_clock::now();
+            elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+            list.fromArray(tmpArr, structureSize);
+            delete[] tmpArr;
+            sorted = list.isSorted();
+        }
+
+        else if (structure == Structures::doubleList) {
+            DoubleList<T> list;
+            if (distribution == Distribution::ascending) {
+                list.fillAscending(structureSize);
+            } else if (distribution == Distribution::descending) {
+                list.fillDescending(structureSize);
+            } else if (distribution == Distribution::ascending50Per) {
+                list.fillAscending50(structureSize);
+            } else {
+                list.fillRandom(structureSize);
+            }
+
+            T* tmpArr = new T[structureSize];
+            list.toArray(tmpArr);
+
+            auto start = std::chrono::high_resolution_clock::now();
+            sortArray(tmpArr, structureSize);
+            auto end = std::chrono::high_resolution_clock::now();
+            elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+
+            list.fromArray(tmpArr, structureSize);
+            delete[] tmpArr;
+            sorted = list.isSorted();
+        }
+        else if (structure == Structures::stack) {
+            Stack<T> stack;
+            stack.fillRandom(structureSize);
+
+            T* tmpArr = new T[structureSize];
+            stack.toArray(tmpArr);
+
+            auto start = std::chrono::high_resolution_clock::now();
+            sortArray(tmpArr, structureSize);
+            auto end = std::chrono::high_resolution_clock::now();
+            elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+
+            stack.fromArray(tmpArr, structureSize);
+            delete[] tmpArr;
+            sorted = stack.isSorted();
+        }
+        else if (structure == Structures::binaryTree) {
+            Array<T> tmpData(structureSize);
+            tmpData.fillRandom();
+
+            T* tmpArr = new T[structureSize];
+            BinaryTree<T> tree;
+
+            auto start = std::chrono::high_resolution_clock::now();
+            for (int i = 0; i < structureSize; i++) {
+                tree.insert(tmpData[i]);
+            }
+            tree.toArray(tmpArr);
+            auto end = std::chrono::high_resolution_clock::now();
+            elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+
+            sorted = tree.isSorted();
+            delete[] tmpArr;
+        }
+        else {
+            std::cerr << "ERROR: no structure" << std::endl;
+            return;
+        }
+
+        // std::cout << "it " << it << ": " << elapsed << " us" << std::endl;
+        if (sorted) {
             successCount++;
             totalTime += elapsed;
             if (minTime < 0 || elapsed < minTime) minTime = elapsed;
             if (elapsed > maxTime) maxTime = elapsed;
+
+            if (!resultsFile.empty()) {
+                appendCsvRow(resultsFile,
+                            algorithmToString(algorithm),
+                            structureToString(structure),
+                            dataTypeToString(dataType),
+                            distributionToString(distribution),
+                            structureSize,
+                            it + 1,
+                            elapsed);
+            }
         } else {
-            std::cerr << "ERROR! Iteration " << it << " did not sort correctly" << std::endl;
+            std::cerr << "ERROR: Iteration " << it << " did't sort correctly" << std::endl;
         }
     }
 
+
     if (successCount == 0) {
-        std::cerr << "ERROR! No successful sorts" << std::endl;
+        std::cerr << "ERROR: no successful sorts" << std::endl;
         return;
     }
 
@@ -108,17 +230,7 @@ void benchmarkForType() {
     std::cout << "Min time: " << minTime << " us" << std::endl;
     std::cout << "Max time: " << maxTime << " us" << std::endl;
     std::cout << "Avg time: " << avgTime << " us" << std::endl;
-
     if (!resultsFile.empty()) {
-        appendCsvRow(resultsFile,
-                    algorithmToString(algorithm),
-                    structureToString(structure),
-                    dataTypeToString(dataType),
-                    structureSize,
-                    iterations,
-                    minTime,
-                    maxTime,
-                    avgTime);
         std::cout << "Results saved to " << resultsFile << std::endl;
     }
 }
@@ -127,8 +239,9 @@ void runSingleFile() {
     using namespace Parameters;
 
     if (inputFile.empty()) {
-        std::cerr << "ERROR! No input file specified" << std::endl;
+        std::cerr << "ERROR: No input file" << std::endl;
         return;
+
     }
 
     switch (dataType) {
@@ -144,21 +257,24 @@ void runSingleFile() {
         case DataTypes::typeUnsignedLong:
             singleFileForType<unsigned long>();
             break;
-        default:
-            std::cerr << "ERROR! Unsupported data type for single file" << std::endl;
+        case DataTypes::typeString:
+            singleFileForType<std::string>();
             break;
+        default:
+            std::cerr << "ERROR: Unsupported data type for single file" << std::endl;
+            break;
+
     }
 }
 
 void runBenchmark() {
     using namespace Parameters;
-
     if (structureSize <= 0) {
-        std::cerr << "ERROR! structureSize must be > 0 (use -l)" << std::endl;
+        std::cerr << "ERROR: structureSize must be > 0 (use -l)" << std::endl;
         return;
     }
     if (iterations <= 0) {
-        std::cerr << "ERROR! iterations must be > 0 (use -n)" << std::endl;
+        std::cerr << "ERROR: iterations must be > 0 (use -n)" << std::endl;
         return;
     }
 
@@ -175,8 +291,11 @@ void runBenchmark() {
         case DataTypes::typeUnsignedLong:
             benchmarkForType<unsigned long>();
             break;
+        case DataTypes::typeString:
+            benchmarkForType<std::string>();
+            break;
         default:
-            std::cerr << "ERROR! Unsupported data type for benchmark" << std::endl;
+            std::cerr << "ERROR: Unsupported data type for benchmark" << std::endl;
             break;
     }
 }
@@ -198,7 +317,7 @@ int main(int argc, char **argv) {
             runBenchmark();
             break;
         default:
-            std::cerr << "ERROR! No mode specified. Use --help for usage." << std::endl;
+            std::cerr << "ERROR: No mode specified. Use --help for usage." << std::endl;
             return 1;
     }
 
