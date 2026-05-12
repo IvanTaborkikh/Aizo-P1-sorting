@@ -16,18 +16,18 @@ void quickSort(T* arr, int max, int min, int pivotType) {
     hi[top] = max;
     top++;
 
+    std::mt19937 gen(std::random_device{}());
+
     while (top > 0) {
         top--;
         int curMin = lo[top];
         int curMax = hi[top];
 
         if (curMin >= curMax) continue;
-
+        
         // default pivot is rightmost element
         int pivotIdx = curMax;
         if (pivotType == 0) {
-            std::random_device rd;
-            std::mt19937 gen(rd());
             std::uniform_int_distribution<int> dist(curMin, curMax);
             pivotIdx = dist(gen);
         } else if (pivotType == 1) {
@@ -86,7 +86,7 @@ void quickSort(T* arr, int max, int min, int pivotType) {
         }
     }
 
-    
+
     delete[] lo;
     delete[] hi;
 }
