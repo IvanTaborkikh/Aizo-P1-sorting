@@ -10,9 +10,15 @@ include_directories(include)
 include_directories(lib)
 
 add_library(parameters SHARED IMPORTED)
-set_target_properties(parameters PROPERTIES
-    IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/lib/libparameters.so
-)
+if(APPLE)
+    set_target_properties(parameters PROPERTIES
+        IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/lib/libparameters.dylib
+    )
+else()
+    set_target_properties(parameters PROPERTIES
+        IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/lib/libparameters.so
+    )
+endif()
 
 add_executable(sorting src/main.cpp)
 target_link_libraries(sorting parameters)

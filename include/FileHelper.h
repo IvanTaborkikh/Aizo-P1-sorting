@@ -6,6 +6,7 @@
 #include <string>
 
 
+// read array from file, first line is size, then elements
 template <typename T>
 bool readArrayFromFile(const std::string& filename, T*& arr, int& size) {
     std::ifstream file(filename);
@@ -14,6 +15,7 @@ bool readArrayFromFile(const std::string& filename, T*& arr, int& size) {
         return false;
     }
 
+    // read size from first line
     file >> size;
     if (size <= 0) {
         std::cerr << "ERROR: Invalid size in the file: " << size << std::endl;
@@ -21,6 +23,7 @@ bool readArrayFromFile(const std::string& filename, T*& arr, int& size) {
         return false;
     }
 
+    // allocate memory and read elements
     arr = new T[size];
     for (int i = 0; i < size; i++) {
         if (!(file >> arr[i])) {
@@ -37,6 +40,7 @@ bool readArrayFromFile(const std::string& filename, T*& arr, int& size) {
     return true;
 }
 
+// write array to file, first line is size, then elements
 template <typename T>
 bool writeArrayToFile(const std::string& filename, T* arr, int size) {
     std::ofstream file(filename);
@@ -45,6 +49,7 @@ bool writeArrayToFile(const std::string& filename, T* arr, int size) {
         return false;
     }
 
+    // write size then each element in new line
     file << size << "\n";
     for (int i = 0; i < size; i++) {
         file << arr[i] << "\n";

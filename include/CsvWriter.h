@@ -7,6 +7,7 @@
 #include <ctime>
 #include "Parameters.h"
 
+// convert algorithm enum to string for csv
 inline std::string algorithmToString(Parameters::Algorithms algo) {
     switch (algo) {
         case Parameters::Algorithms::bubble:    return "bubble";
@@ -21,6 +22,7 @@ inline std::string algorithmToString(Parameters::Algorithms algo) {
 }
 
 
+// convert structure enum to string for csv
 inline std::string structureToString(Parameters::Structures s) {
     switch (s) {
         case Parameters::Structures::array:      return "array";
@@ -33,6 +35,7 @@ inline std::string structureToString(Parameters::Structures s) {
     }
 }
 
+// convert data type enum to string for csv
 inline std::string dataTypeToString(Parameters::DataTypes t) {
     switch (t) {
         case Parameters::DataTypes::typeInt:          return "int";
@@ -47,6 +50,7 @@ inline std::string dataTypeToString(Parameters::DataTypes t) {
 }
 
 
+// convert distribution enum to string for csv
 inline std::string distributionToString(Parameters::Distribution d) {
     switch (d) {
         case Parameters::Distribution::random:        return "random";
@@ -57,6 +61,7 @@ inline std::string distributionToString(Parameters::Distribution d) {
     }
 }
 
+// get current date and time as formatted string
 inline std::string getCurrentDateTime() {
     std::time_t t = std::time(nullptr);
     std::tm* tm = std::localtime(&t);
@@ -65,6 +70,7 @@ inline std::string getCurrentDateTime() {
     return std::string(buf);
 }
 
+// write csv header only if file doesn't exist yet
 inline void writeCsvHeaderIfNeeded(const std::string& filename) {
     std::ifstream check(filename);
     bool exists = check.good();
@@ -82,13 +88,14 @@ inline void writeCsvHeaderIfNeeded(const std::string& filename) {
     }
 }
 
+// append one row with benchmark results to csv file
 inline void appendCsvRow(const std::string& filename,
                          const std::string& algorithm,
                          const std::string& structure,
                          const std::string& dataType,
                          const std::string& distribution,
                          int size,
-                         int iteration,
+                         const std::string& iteration,
                          long long timeUs) {
     std::ofstream file(filename, std::ios::app);
     if (!file.is_open()) {
